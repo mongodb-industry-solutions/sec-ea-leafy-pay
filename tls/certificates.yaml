@@ -1,0 +1,55 @@
+############################################# Ceritificate Replica Set
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: mdb-rs-server-tls
+  namespace: leafy-pay
+spec:
+  secretName: certs-replica-set-cert    ###### Secret: it must match with the name of the replica-set resource
+  issuerRef:
+    name: leafy-ca-issuer
+    kind: ClusterIssuer
+  duration: 2160h0m0s
+  renewBefore: 720h0m0s
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+  dnsNames:
+    # per‑member pod + pod FQDNs (3‑member RS)
+    - "replica-set-0"
+    - "replica-set-0.replica-set-svc.leafy-pay.svc.cluster.local"
+    - "replica-set-1"
+    - "replica-set-1.replica-set-svc.leafy-pay.svc.cluster.local"
+    - "replica-set-2"
+    - "replica-set-2.replica-set-svc.leafy-pay.svc.cluster.local"
+    # service‑level FQDNs
+    - "replica-set-svc.leafy-pay.svc.cluster.local"
+    - "*.replica-set-svc.leafy-pay.svc.cluster.local"
+    # external LoadBalancer hostnames (per-member, must match connectivity.replicaSetHorizons)
+    - "add-your-replicaset-0-external-ip"
+    - "add-your-replicaset-1-external-ip"
+    - "add-your-replicaset-2-external-ip"
+
+---
+
+############################################# Ceritificate Search
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: om-http-cert
+  namespace: leafy-pay
+spec:
+  secretName: om-http-cert   ###### Secret
+  issuerRef:
+    name: leafy-ca-issuer
+    kind: ClusterIssuer
+  duration: 2160h0m0s
+  renewBefore: 720h0m0s
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+  dnsNames:
+    - "ops-manager-svc.leafy-pay.svc.cluster.local"

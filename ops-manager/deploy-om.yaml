@@ -1,0 +1,56 @@
+apiVersion: mongodb.com/v1
+kind: MongoDBOpsManager
+metadata:
+  name: ops-manager
+  namespace: leafy-pay
+spec:
+  version: "8.0.25"
+  adminCredentials: om-admin-secret
+  externalConnectivity:
+    type: LoadBalancer
+  statefulSet:
+    spec:
+      template:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001350000
+            fsGroup: 1001350000
+  configuration:
+    mms.ignoreInitialUiSetup: "true"
+    automation.versions.source: remote
+    mms.adminEmailAddr: support@example.com
+    mms.fromEmailAddr: support@example.com
+    mms.replyToEmailAddr: support@example.com
+    mms.mail.hostname: example.com
+    mms.mail.port: "466"
+    mms.mail.ssl: "false"
+    mms.mail.transport: smtp
+  backup:
+    enabled: false # Dissable backup for now
+  applicationDatabase:
+    members: 3 # this is the minimum acceptable for AppDB
+    version: "8.3.3"
+    podSpec:
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001350000
+            fsGroup: 1001350000
+
+---
+# This is a Global Owner User used basically only for the initial setup of Ops Manager.
+# It is not recommended to use this user for daily operations
+# For deploying MongoDB resources, an API Key needs to be created in OM UI (e.g. replica-set/secret.yaml)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: om-admin-secret
+  namespace: leafy-pay
+type: Opaque
+stringData:
+  Username: "add-your-user"
+  Password: "add-your-strong-password" # strong password needed or OM will not start monitoring for AppDB
+  FirstName: "Administrator" # cannot be empty or MCK will not be able to create
+  LastName: "Ops Manager" # cannot be empty or MCK will not be able to create

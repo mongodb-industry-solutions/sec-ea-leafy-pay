@@ -1,0 +1,60 @@
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: replica-set
+  namespace: leafy-pay
+spec:
+  type: ReplicaSet
+  members: 3
+  version: "8.3.3-ent"
+  persistent: true
+  # OpsManager Config
+  opsManager:
+    configMapRef:
+      name: leafy-org
+  credentials: organization-secret
+  # Enable TLS and database authentication
+  security:
+    authentication:
+      enabled: true
+      ignoreUnknownUsers: true
+      modes:
+      - SCRAM
+    certsSecretPrefix: certs
+    tls:
+      enabled: true
+      ca: replica-set-ca-configmap # ConfigMap with CA PEM
+  podSpec:
+      podTemplate:
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001350000
+            fsGroup: 1001350000
+  # External Access with Horizons
+  # This is the external access configuration for the replica set. It is used to expose the replica set to the outside world.
+  # The order matters here, the first external address will be used as for the replica-set-0, and so on.
+  # Horizons are configured in order that mongod will advertise the external addresses to clients.
+  # If not, the clients will try to use the internal Kubernetes hostnames and fail to connect.
+  connectivity:
+    replicaSetHorizons:
+      - external: "add-your-replicaset-0-external-ip"
+      - external: "add-your-replicaset-1-external-ip"
+      - external: "add-your-replicaset-2-external-ip"
+  # Create a LoadBalancer service for exposing the replica set.
+  # Three load balancers will be created, one for each member of the replica set exposing them.
+  # The horizons configured above are the LBs external hostnames that will be advertised to clients.
+  externalAccess:
+      externalService:
+        spec:
+          type: LoadBalancer
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: organization-secret
+  namespace: leafy-pay
+stringData:
+  user: "add-your-public-api-key"
+  publicApiKey: "add-your-private-api-key"

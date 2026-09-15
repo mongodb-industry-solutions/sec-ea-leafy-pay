@@ -1,0 +1,38 @@
+############################################# Bootstrap self‑signed ClusterIssuer (for CA generation)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: leafy-selfsigned-bootstrap-issuer
+spec:
+  selfSigned: {}
+
+---
+
+############################################# Ceritificate Authority
+# creates leafy-root-secret in cert-manager namespace
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: leafy-selfsigned-ca
+  namespace: cert-manager
+spec:
+  isCA: true 
+  commonName: leafy-selfsigned-ca    
+  secretName: leafy-root-secret   ## create a secret with the CA certificate
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  issuerRef:
+    name: leafy-selfsigned-bootstrap-issuer
+    kind: ClusterIssuer
+
+---
+
+############################################# Cluster Issuer using the CA created above
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: leafy-ca-issuer
+spec:
+  ca:
+    secretName: leafy-root-secret
