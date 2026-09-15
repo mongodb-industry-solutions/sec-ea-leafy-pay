@@ -48,6 +48,8 @@ Then:
 - update the URL of OpsManager
 
 ## TLS
+For the certs issuing, we will use `cert-manager`.  
+Cert-manager is already installed in the `cert-manager` namespace.  
 
 Create the CA:
 ```
