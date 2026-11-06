@@ -8,6 +8,7 @@ https://github.com/mongodb-industry-solutions/sec-fsi-pci-dss
 - install MCK
 - deploy MCK
 - deploy a replica-set
+- deploy Search
 
 For this project, we will use the namespace `leafy-pay`
 
@@ -107,6 +108,10 @@ Use them and build the connection string.
 ```
 mongodb://<external-host-0>:27017,<external-host-1>:27017,<external-host-2>:27017/?replicaSet=replica-set
 ```
+
+## Deploy Search
+To deploy MongoDB Search and Vector Search (sync user, Search pods, TLS certificates, sample data and indexes), follow [search/README.md](search/README.md).  
+If something goes wrong, check [search/TROUBLESHOOTING.md](search/TROUBLESHOOTING.md).
 
 ## Observations for Automation
 
