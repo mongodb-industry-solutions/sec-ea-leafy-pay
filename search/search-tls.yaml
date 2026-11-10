@@ -1,0 +1,116 @@
+apiVersion: mongodb.com/v1
+kind: MongoDBSearch
+metadata:
+  name: replica-set # same name as the MongoDB replica-set resource to avoid specifying source.mongodbResourceRef
+  namespace: leafy-pay
+spec:
+  logLevel: INFO
+  security:
+    tls:
+      certsSecretPrefix: fts-vs # secrets are named fts-vs-replica-set-search-*
+  # OpenShift: the operator defaults to UID/fsGroup 2000, which the namespace's SCC rejects.
+  # Use the namespace UID range (openshift.io/sa.scc.uid-range) instead, like the mongod pods.
+  observability:
+    metricsForwarder:
+      deployment:
+        spec:
+          template:
+            spec:
+              securityContext:
+                runAsUser: 1001350000
+                fsGroup: 1001350000
+  clusters:
+    - replicas: 3
+      statefulSet:
+        spec:
+          template:
+            spec:
+              securityContext:
+                runAsUser: 1001350000
+                fsGroup: 1001350000
+      loadBalancer:
+        managed:
+          deployment:
+            spec:
+              template:
+                spec:
+                  securityContext:
+                    runAsUser: 1001350000
+                    fsGroup: 1001350000
+      resourceRequirements:
+        limits:
+          cpu: "2"
+          memory: 2Gi
+        requests:
+          cpu: "1"
+          memory: 1Gi
+---
+# LB server certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fts-vs-replica-set-search-lb-0-cert
+  namespace: leafy-pay
+spec:
+  secretName: fts-vs-replica-set-search-lb-0-cert # because I am using the prefix fts-vs and "replica-set"
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - server auth
+  dnsNames:
+    # This is the exact DNS name the MongoDB nodes use to find the Search LB
+    - "replica-set-search-lb-0-svc.leafy-pay.svc.cluster.local"
+    # General wildcard for this namespace
+    - "*.leafy-pay.svc.cluster.local"
+    # Short name for internal pod-to-pod communication
+    - "replica-set-search-lb-0-svc"
+  issuerRef:
+    name: leafy-ca-issuer
+    kind: ClusterIssuer
+
+---
+# LB client certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fts-vs-replica-set-search-lb-0-client-cert
+  namespace: leafy-pay
+spec:
+  secretName: fts-vs-replica-set-search-lb-0-client-cert # because I am using the prefix fts-vs and "replica-set"
+  duration: 8760h # 1 year
+  renewBefore: 720h # 30 days
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  usages:
+    - client auth
+  dnsNames:
+    - "*.leafy-pay.svc.cluster.local"
+  issuerRef:
+    name: leafy-ca-issuer
+    kind: ClusterIssuer
+
+---
+# mongot server certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: fts-vs-replica-set-search-cert
+  namespace: leafy-pay
+spec:
+  secretName: fts-vs-replica-set-search-cert # <prefix>-<resource name>-search-cert
+  issuerRef:
+    name: leafy-ca-issuer
+    kind: ClusterIssuer
+  duration: 2160h0m0s
+  renewBefore: 720h0m0s
+  usages:
+    - digital signature
+    - key encipherment
+    - server auth
+    - client auth
+  dnsNames:
+    - "replica-set-search-svc.leafy-pay.svc.cluster.local"

@@ -19,6 +19,8 @@ spec:
   isCA: true 
   commonName: leafy-selfsigned-ca    
   secretName: leafy-root-secret   ## create a secret with the CA certificate
+  duration: 43800h                ## 5 years (default is 90 days); renews 30 days before expiry
+  renewBefore: 720h
   privateKey:
     algorithm: ECDSA
     size: 256
